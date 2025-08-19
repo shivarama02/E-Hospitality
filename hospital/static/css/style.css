@@ -262,3 +262,11 @@ body.landing-page {
   border: 2px solid #4f8cff;   /* Primary blue border */
   box-shadow: none;            /* Remove default shadow if needed */
 }
+
+/* Grey navbar toggler (for mobile) */
+.navbar-toggler.gray { border-color: #6c757d; }
+.navbar-toggler.gray:focus { box-shadow: 0 0 0 .1rem rgba(108,117,125,.25); }
+.navbar-toggler.gray .navbar-toggler-icon {
+	/* Grey bars using an inline SVG to override Bootstrap default */
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(108,117,125,1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
