@@ -1,0 +1,264 @@
+body {
+	font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+	height: 100%;
+	background: url("../images/bgimage.jpg") center/cover no-repeat fixed;
+}
+
+/* Landing page should not inherit the global body background image */
+body.landing-page {
+	background: #f8fafc;
+}
+
+.navbar {
+	background-color: rgba(255, 255, 255, 0.2);
+	backdrop-filter: blur(5px);
+	box-shadow: none;
+}
+
+.navbar-brand {
+	font-weight: 700;
+	font-size: 1.5rem;
+	letter-spacing: 1px;
+	color: #222;
+}
+
+.navbar-brand img {
+	height: 38px;
+	margin-right: 10px;
+}
+
+.nav-link {
+	color: #222 !important;
+	font-size: 1.1rem;
+	margin-right: 18px;
+	transition: color 0.2s;
+}
+
+.nav-link.active, .nav-link:hover {
+	color: #4f8cff !important;
+	font-weight: 600;
+}
+
+.hero-section {
+	min-height: 90vh;
+	display: flex;
+	align-items: center;
+	padding: 60px;
+	margin: 0; /* removed outside spacing */
+	background: transparent;
+	border-radius: 0; /* no rounded corners */
+	position: relative;
+	overflow: hidden;
+	box-shadow: 0 6px 28px rgba(0,0,0,0.1);
+}
+
+.hero-title {
+	font-size: 3rem;
+	font-weight: 700;
+	color: #222;
+	margin-bottom: 18px;
+}
+
+.hero-desc {
+	font-size: 1.2rem;
+	color: #555;
+	margin-bottom: 2.2rem;
+}
+
+.btn-gradient {
+	background: linear-gradient(90deg, #4f8cff 0%, #6ad6ff 100%);
+	color: #fff;
+	border: none;
+	font-weight: 500;
+	padding: 0.75rem 2.2rem;
+	border-radius: 30px;
+	font-size: 1.1rem;
+	box-shadow: 0 2px 8px rgba(79,140,255,0.15);
+	transition: background 0.3s;
+}
+
+.btn-gradient:hover {
+	background: linear-gradient(90deg, #6ad6ff 0%, #4f8cff 100%);
+	color: #fff;
+}
+
+.info-section {
+	margin-top: -60px;
+	background-color: rgba(255, 255, 255, 0.2);
+	backdrop-filter: blur(5px);
+	border-radius: 32px;
+	box-shadow: 0 4px 24px rgba(79,140,255,0.06);
+	padding: 100px 0;
+}
+
+.info-title {
+	font-size: 1.3rem;
+	font-weight: 600;
+	color: #222;
+}
+
+.info-desc {
+	color: #555;
+	font-size: 1.1rem;
+}
+
+.arrow-btn {
+	background: #fff;
+	border: 1px solid #e0eafc;
+	border-radius: 50%;
+	width: 38px;
+	height: 38px;
+	font-size: 1.3rem;
+	color: #4f8cff;
+	margin: 0 6px;
+	box-shadow: 0 2px 8px rgba(79,140,255,0.08);
+	transition: background 0.2s, color 0.2s;
+}
+
+.arrow-btn:hover {
+	background: #4f8cff;
+	color: #fff;
+}
+
+.footer {
+    background: #2e2d2d;
+    color: #fff;
+    padding: 18px 0 10px 0;
+    text-align: center;
+}
+
+/* Enhanced hero styles */
+.bg-gradient-hero {
+	background: radial-gradient(1200px 600px at 10% 10%, rgba(79,140,255,0.35), rgba(0,0,0,0) 60%),
+				radial-gradient(1000px 500px at 90% 20%, rgba(106,214,255,0.30), rgba(0,0,0,0) 60%),
+				linear-gradient(180deg, rgba(6,25,53,0.85) 0%, rgba(6,25,53,0.65) 100%);
+	border-radius: 0; /* no rounded corners */
+	position: relative;
+	overflow: hidden;
+}
+
+/* CSS-driven hero background image with fallback */
+.bg-gradient-hero::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	/* First try hero-bg.jpg; fallback to existing bgimage.jpg if missing */
+	background: url('../images/bgimage.jpg') center/cover no-repeat,
+				url('../images/bgimage.jpg') center/cover no-repeat;
+	filter: brightness(0.55) saturate(1.1);
+	border-radius: 0; /* no rounded corners */
+	z-index: 0;
+}
+
+.hero-overlay {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, rgba(6,25,53,0.85) 0%, rgba(6,25,53,0.65) 60%, rgba(6,25,53,0.25) 100%);
+	border-radius: 0; /* no rounded corners */
+	z-index: 0;
+}
+
+/* Ensure hero text is legible on dark background */
+.bg-gradient-hero .hero-title { color: #ffffff; }
+.bg-gradient-hero .hero-desc { color: #e6f0ff; }
+
+/* Adjust gradient button contrast on dark hero */
+.bg-gradient-hero .btn-gradient {
+	background: linear-gradient(90deg, #6ad6ff 0%, #4f8cff 100%);
+	color: #061935;
+}
+.bg-gradient-hero .btn-gradient:hover {
+	background: linear-gradient(90deg, #4f8cff 0%, #6ad6ff 100%);
+	color: #061935;
+}
+
+/* Primary gradient utility (for CTA) */
+.bg-gradient-primary {
+	background: linear-gradient(90deg, #4f8cff 0%, #6ad6ff 100%);
+}
+
+/* Custom hero variant matching requested snippet */
+.hero-custom {
+	min-height: 90vh; /* taller hero fits desktop viewport */
+	margin: 0; /* remove outer margin */
+	border-radius: 0; /* no rounded corners */
+	background-color: #061935; /* Base color so if image is missing, we don't see the body background */
+	background-image: url('../images/bgimage.jpg');
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+.hero-custom .hero-overlay {
+	background: rgba(0,0,0,0.4);
+	border-radius: 0; /* no rounded corners */
+}
+.hero-custom .hero-title { color: #ffffff; }
+.hero-custom .hero-desc { color: #e6f0ff; }
+
+/* Common Section Styling */
+.section-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #061935;
+  position: relative;
+  display: inline-block;
+}
+
+.section-title::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: #4f8cff;
+  margin: 12px auto 0;
+  border-radius: 2px;
+}
+
+/* About Section */
+.about-section {
+  padding: 70px 90px;
+}
+
+.about-text {
+  font-size: 1.15rem;
+  color: #ffffff;
+  line-height: 1.8;
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+/* Services Section */
+.services-section {
+  background: #fff;
+  border-radius: 28px;
+  margin: 40px auto;
+  padding: 80px 20px;
+}
+
+.service-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 20px;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 18px rgba(79, 140, 255, 0.08);
+  border: 1px solid #eef3ff;
+}
+
+.service-card:hover {
+  background: linear-gradient(90deg, #4f8cff 0%, #6ad6ff 100%);
+  transform: translateY(-8px);
+  box-shadow: 0 8px 28px rgba(79, 140, 255, 0.15);
+  color: white;
+}
+
+/* Service Icons */
+.service-icon {
+  font-size: 2.5rem;
+  color: #4f8cff;
+  margin-bottom: 15px;
+}
+.outline-primary {
+  border: 2px solid #4f8cff;   /* Primary blue border */
+  box-shadow: none;            /* Remove default shadow if needed */
+}

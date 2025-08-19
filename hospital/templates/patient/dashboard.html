@@ -1,0 +1,270 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Dashboard - E-Hospitality</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .card { border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .quick-btn { height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .section-header { background: linear-gradient(90deg, #0d6efd, #0dcaf0); color: white; }
+  </style>
+  <!-- Keep existing global CSS if needed -->
+</head>
+<body>
+
+  <!-- Header (preserves links and logout modal trigger) -->
+  <header class="bg-white shadow-sm border-bottom">
+    <div class="container py-3 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+					<img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 36px; width: 36px; margin-right: 10px;">
+					<h1 class="h4 text-primary fw-bold mb-0">CityCare Hospital</h1>
+				</div>
+      <nav class="d-flex align-items-center gap-2">
+        <a href="/patient/dashboard/" class="btn btn-light">Dashboard</a>
+        <a href="/patient/profile/" class="btn btn-light">Profile</a>
+        <a href="/notifications/" class="btn btn-light">Notifications</a>
+        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Welcome Section -->
+  <section class="section-header py-5">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <h1 class="fw-bold">Welcome back</h1>
+        <p class="mb-0">Patient ID: <strong>P-2024-001</strong></p>
+      </div>
+      <div class="text-end">
+        <p class="mb-0">Next Appointment</p>
+        <h4 class="fw-bold">Mar 15, 2024 - 2:00 PM</h4>
+        <small>Dr. Sarah Johnson - Cardiology</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Actions (mapped to existing routes) -->
+  <section class="py-4 bg-light">
+    <div class="container">
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <a href="/patient/appointment-booking/" class="btn btn-primary w-100 quick-btn">
+            <i class="bi bi-calendar fs-3"></i>
+            <span>Book Appointment</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="/patient/medical-history/" class="btn btn-outline-secondary w-100 quick-btn">
+            <i class="bi bi-file-earmark-text fs-3"></i>
+            <span>Medical Records</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="/patient/billing-payment/" class="btn btn-outline-secondary w-100 quick-btn">
+            <i class="bi bi-credit-card fs-3"></i>
+            <span>Billing</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="/patient/health-education/" class="btn btn-outline-secondary w-100 quick-btn">
+            <i class="bi bi-book fs-3"></i>
+            <span>Health Education</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Content -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+
+        <!-- Left Column -->
+        <div class="col-lg-8">
+          <!-- Upcoming Appointments -->
+          <div class="card mb-4">
+            <div class="card-header fw-bold">
+              <i class="bi bi-calendar-check me-2"></i> Upcoming Appointments
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                <div>
+                  <h6 class="mb-1">Dr. Sarah Johnson</h6>
+                  <small class="text-muted">Cardiology Consultation</small>
+                </div>
+                <div class="text-end">
+                  <strong>Mar 15, 2024</strong><br>
+                  <small class="text-muted">2:00 PM - 2:30 PM</small>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                <div>
+                  <h6 class="mb-1">Dr. Michael Chen</h6>
+                  <small class="text-muted">General Checkup</small>
+                </div>
+                <div class="text-end">
+                  <strong>Mar 22, 2024</strong><br>
+                  <small class="text-muted">10:00 AM - 10:30 AM</small>
+                </div>
+              </div>
+              <a href="/patient/appointment-history/" class="btn btn-outline-primary w-100 mt-3">View All Appointments</a>
+            </div>
+          </div>
+
+          <!-- Medical History -->
+          <div class="card mb-4">
+            <div class="card-header fw-bold">
+              <i class="bi bi-file-earmark-text me-2"></i> Recent Medical History
+            </div>
+            <div class="card-body">
+              <div class="border-start border-4 border-primary ps-3 mb-3">
+                <h6>Cardiology Consultation</h6>
+                <small class="text-muted">Mar 1, 2024 - Dr. Sarah Johnson</small>
+                <p class="mb-0">ECG results normal. Blood pressure slightly elevated. Prescribed medication.</p>
+              </div>
+              <div class="border-start border-4 border-success ps-3 mb-3">
+                <h6>Blood Test Results</h6>
+                <small class="text-muted">Feb 28, 2024 - Lab Department</small>
+                <p class="mb-0">All values within normal range.</p>
+              </div>
+              <div class="border-start border-4 border-warning ps-3">
+                <h6>Annual Physical</h6>
+                <small class="text-muted">Feb 15, 2024 - Dr. Michael Chen</small>
+                <p class="mb-0">Overall health good. Recommended increase in physical activity.</p>
+              </div>
+              <a href="/patient/medical-history/" class="btn btn-outline-primary w-100 mt-3">View Complete Medical History</a>
+            </div>
+          </div>
+
+          <!-- Health Education -->
+          <div class="card">
+            <div class="card-header fw-bold">
+              <i class="bi bi-book me-2"></i> Health Education Resources
+            </div>
+            <div class="card-body row g-3">
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded">
+                  <h6 class="text-primary">Heart Health Tips</h6>
+                  <small>Learn about maintaining cardiovascular health through diet and exercise.</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded">
+                  <h6 class="text-success">Medication Guide</h6>
+                  <small>Important information about your prescribed medications.</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded">
+                  <h6 class="text-warning">Wellness Programs</h6>
+                  <small>Join our community wellness and prevention programs.</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded">
+                  <h6 class="text-secondary">Nutrition Planning</h6>
+                  <small>Personalized nutrition recommendations for your health goals.</small>
+                </div>
+              </div>
+              <a href="/patient/health-education/" class="btn btn-outline-primary w-100 mt-3">Explore All Resources</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+          <!-- Quick Contact -->
+          <div class="card mb-4">
+            <div class="card-header fw-bold">Quick Contact</div>
+            <div class="card-body">
+              <a class="btn btn-outline-danger w-100 mb-2" href="#">
+                <i class="bi bi-telephone me-2"></i> Emergency: 911
+              </a>
+              <a class="btn btn-outline-secondary w-100 mb-2" href="#">
+                <i class="bi bi-telephone me-2"></i> Hospital: (555) 123-4567
+              </a>
+              <a class="btn btn-outline-primary w-100" href="#">
+                <i class="bi bi-clock me-2"></i> 24/7 Nurse Line
+              </a>
+            </div>
+          </div>
+
+          <!-- Current Medications -->
+          <div class="card mb-4">
+            <div class="card-header fw-bold">Current Medications</div>
+            <div class="card-body">
+              <div class="p-2 bg-light rounded mb-2">
+                <h6 class="mb-1">Lisinopril 10mg</h6>
+                <small>Once daily, morning</small>
+              </div>
+              <div class="p-2 bg-light rounded mb-2">
+                <h6 class="mb-1">Metformin 500mg</h6>
+                <small>Twice daily, with meals</small>
+              </div>
+              <a href="/patient/medical-history/" class="btn btn-outline-primary w-100 mt-2">Manage Medications</a>
+            </div>
+          </div>
+
+          <!-- Health Metrics -->
+          <div class="card">
+            <div class="card-header fw-bold">Health Metrics</div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Blood Pressure</span>
+                <span class="badge bg-light text-dark border">125/80</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Heart Rate</span>
+                <span class="badge bg-light text-dark border">72 bpm</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Weight</span>
+                <span class="badge bg-light text-dark border">165 lbs</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>BMI</span>
+                <span class="badge bg-light text-dark border">24.2</span>
+              </div>
+              <a href="/patient/profile/" class="btn btn-outline-primary w-100 mt-3">Update Metrics</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logout Modal (kept) -->
+  <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p>Are you sure you want to logout?</p>
+        </div>
+        <div class="modal-footer">
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Logout</button>
+          </form>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

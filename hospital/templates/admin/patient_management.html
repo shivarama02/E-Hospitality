@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto" style="max-width: 1200px;">
+        <div class="card-header bg-primary text-white text-center">
+            <h2>Patient Management</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped table-hover text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>DOB</th>
+                        <th>Gender</th>
+                        <th>Contact</th>
+                        <th>Address</th>
+                        <th>Insurance Info</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                    <tr>
+                        <td>{{ patient.pname }}</td>
+                        <td>{{ patient.email }}</td>
+                        <td>{{ patient.dob }}</td>
+                        <td>{{ patient.gender }}</td>
+                        <td>{{ patient.contact }}</td>
+                        <td>{{ patient.address }}</td>
+                        <td>{{ patient.insurance_info }}</td>
+                        <td>
+                            <!-- Edit Button -->
+                            <button class="btn btn-warning btn-sm edit-btn"
+                                data-bs-toggle="modal" data-bs-target="#editPatientModal"
+                                data-id="{{ patient.id }}"
+                                data-pname="{{ patient.pname }}"
+                                data-email="{{ patient.email }}"
+                                data-dob="{{ patient.dob }}"
+                                data-gender="{{ patient.gender }}"
+                                data-contact="{{ patient.contact }}"
+                                data-address="{{ patient.address }}"
+                                data-insurance_info="{{ patient.insurance_info }}"
+                            >Edit</button>
+
+                            <!-- Delete Button (unchanged) -->
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ patient.id }}">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Delete Confirmation Modal (unchanged) -->
+                    <div class="modal fade" id="deleteModal{{ patient.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ patient.id }}" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title text-danger" id="deleteModalLabel{{ patient.id }}">Confirm Delete</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body text-center">
+                            Are you sure you want to delete <strong>{{ patient.pname }}</strong>?<br>
+                            This action cannot be undone.
+                          </div>
+                          <div class="modal-footer">
+                            <form method="post" action="/admin/delete-patient/{{ patient.id }}/" style="display:inline;">
+                              {% csrf_token %}
+                              <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            </form>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No patients found.</td>
+                    </tr>
+                    {% endfor %}
+<!-- Edit Patient Modal (single, outside table) -->
+<div class="modal fade" id="editPatientModal" tabindex="-1" aria-labelledby="editPatientModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editPatientForm" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="editPatientModalLabel">Edit Patient</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" name="patient_id" id="edit-patient-id">
+            <div class="mb-3">
+                <label for="edit-pname" class="form-label">Name</label>
+                <input type="text" class="form-control" id="edit-pname" name="pname" required>
+            </div>
+            <div class="mb-3">
+                <label for="edit-email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="edit-email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="edit-dob" class="form-label">DOB</label>
+                <input type="date" class="form-control" id="edit-dob" name="dob">
+            </div>
+      <div class="mb-3">
+        <label for="edit-gender" class="form-label">Gender</label>
+        <select class="form-select" id="edit-gender" name="gender">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+            <div class="mb-3">
+                <label for="edit-contact" class="form-label">Contact</label>
+                <input type="text" class="form-control" id="edit-contact" name="contact">
+            </div>
+            <div class="mb-3">
+                <label for="edit-address" class="form-label">Address</label>
+                <input type="text" class="form-control" id="edit-address" name="address">
+            </div>
+            <div class="mb-3">
+                <label for="edit-insurance_info" class="form-label">Insurance Info</label>
+                <input type="text" class="form-control" id="edit-insurance_info" name="insurance_info">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Fill modal with patient data on Edit click
+document.querySelectorAll('.edit-btn').forEach(function(button) {
+  button.addEventListener('click', function() {
+    document.getElementById('edit-patient-id').value = this.getAttribute('data-id');
+    document.getElementById('edit-pname').value = this.getAttribute('data-pname');
+    document.getElementById('edit-email').value = this.getAttribute('data-email');
+    document.getElementById('edit-dob').value = this.getAttribute('data-dob');
+    // Set gender select value
+    let gender = this.getAttribute('data-gender');
+    let genderSelect = document.getElementById('edit-gender');
+    for (let i = 0; i < genderSelect.options.length; i++) {
+      if (genderSelect.options[i].value === gender) {
+        genderSelect.selectedIndex = i;
+        break;
+      }
+    }
+    document.getElementById('edit-contact').value = this.getAttribute('data-contact');
+    document.getElementById('edit-address').value = this.getAttribute('data-address');
+    document.getElementById('edit-insurance_info').value = this.getAttribute('data-insurance_info');
+    // Set form action
+    document.getElementById('editPatientForm').action = '/admin/edit-patient/' + this.getAttribute('data-id') + '/';
+  });
+});
+</script>
+</body>
+</html>

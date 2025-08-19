@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto" style="max-width: 1200px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Doctor Management</h2>
+            
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Specialization</th>
+                        <th>Contact</th>
+                        <th>Department</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doctor in doctors %}
+                    <tr>
+                        <td>{{ doctor.name }}</td>
+                        <td>{{ doctor.email }}</td>
+                        <td>{{ doctor.specialization }}</td>
+                        <td>{{ doctor.contact }}</td>
+                        <td>{{ doctor.department }}</td>
+                        <td>
+                            <!-- Edit Button -->
+                            <button class="btn btn-warning btn-sm edit-btn" 
+                                data-bs-toggle="modal" data-bs-target="#editModal"
+                                data-id="{{ doctor.id }}"
+                                data-name="{{ doctor.name }}"
+                                data-email="{{ doctor.email }}"
+                                data-specialization="{{ doctor.specialization }}"
+                                data-contact="{{ doctor.contact }}"
+                                data-department="{{ doctor.department }}">
+                                Edit
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ doctor.id }}">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal{{ doctor.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Confirm Delete</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <p>Are you sure you want to delete <strong>{{ doctor.name }}</strong>?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <form method="post" action="/admin/delete-doctor/{{ doctor.id }}/">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                    </form>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center">No doctors found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Doctor Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Doctor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" id="editName" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="editEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Specialization</label>
+                        <input type="text" id="editSpecialization" name="specialization" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contact</label>
+                        <input type="text" id="editContact" name="contact" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" id="editDepartment" name="department" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Populate Edit Modal dynamically
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const id = this.getAttribute('data-id');
+            document.getElementById('editName').value = this.getAttribute('data-name');
+            document.getElementById('editEmail').value = this.getAttribute('data-email');
+            document.getElementById('editSpecialization').value = this.getAttribute('data-specialization');
+            document.getElementById('editContact').value = this.getAttribute('data-contact');
+            document.getElementById('editDepartment').value = this.getAttribute('data-department');
+
+            // update form action dynamically
+            document.getElementById('editForm').action = `/admin/edit-doctor/${id}/`;
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f8f9fa; }
+        .profile-container { max-width: 980px; margin: 2.5rem auto; }
+        .outer-card { border: 0; border-radius: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,.08); overflow: hidden; }
+        .banner { background: linear-gradient(135deg, #0d6efd, #0a58ca); min-height: 90px; }
+        .avatar-card { border: 0; background: #fff; }
+        .profile-pic { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 8px 24px rgba(13,110,253,.25); }
+        .name { font-weight: 700; }
+        .muted { color: #6c757d; }
+        .info-card { border: 0; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.05); border-radius: .75rem; }
+        .info-card h5 { font-weight: 600; }
+        .label { width: 160px; color: #6c757d; }
+    </style>
+</head>
+<body>
+
+<div class="container profile-container">
+    <div class="card outer-card">
+        <div class="banner w-100"></div>
+        <div class="p-4">
+            <div class="row g-4">
+                <!-- Left: Avatar and Basic Info -->
+                <div class="col-lg-4">
+                    <div class="card avatar-card text-center p-4">
+                        <img src="{{ patient.profile_pic_url|default:'/static/icons/logo.png' }}" class="profile-pic mb-3" alt="Profile photo of {{ patient.pname }}">
+                        <div class="name h4 mb-1">{{ patient.pname }}</div>
+                        <div class="muted">{{ patient.email }}</div>
+                        <hr>
+                        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#editProfileModal">Edit Profile</button>
+                    </div>
+                </div>
+                <!-- Right: Two info cards -->
+                <div class="col-lg-8">
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <div class="card info-card p-3">
+                                <h5 class="mb-3 text-primary">Personal</h5>
+                                <div class="d-flex mb-2"><div class="label">Date of Birth</div><div>: {{ patient.dob|default:'-' }}</div></div>
+                                <div class="d-flex mb-2"><div class="label">Gender</div><div>: {{ patient.gender|default:'-' }}</div></div>
+                                <div class="d-flex mb-2"><div class="label">Insurance</div><div>: {{ patient.insurance_info|default:'-' }}</div></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card info-card p-3">
+                                <h5 class="mb-3 text-primary">Contact</h5>
+                                <div class="d-flex mb-2"><div class="label">Phone</div><div>: {{ patient.contact|default:'-' }}</div></div>
+                                <div class="d-flex mb-2"><div class="label">Email</div><div>: {{ patient.email|default:'-' }}</div></div>
+                                <div class="d-flex mb-2"><div class="label">Address</div><div>: {{ patient.address|default:'-' }}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'patient_profile_settings' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProfileModalLabel">Update Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="name" class="form-control" value="{{ patient.pname }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ patient.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date of Birth</label>
+                        <input type="date" name="dob" class="form-control" value="{{ patient.dob }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gender</label>
+                        <select name="gender" class="form-select">
+                            <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
+                            <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>
+                            <option value="Other" {% if patient.gender == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contact</label>
+                        <input type="text" name="contact" class="form-control" value="{{ patient.contact }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" value="{{ patient.address }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Insurance Info</label>
+                        <input type="text" name="insurance_info" class="form-control" value="{{ patient.insurance_info }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Profile Picture</label>
+                        <input type="file" name="profile_pic" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+  
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
