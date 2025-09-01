@@ -31,6 +31,7 @@
                             <th>Time</th>
                             <th>Doctor</th>
                             <th>Status</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,10 +40,38 @@
                             <td>{{ appt.date }}</td>
                             <td>{{ appt.time }}</td>
                             <td>{{ appt.doctor.name }}</td>
-                            <td>{{ appt.status }}</td>
+                            <td>
+                                {% with s=appt.status|lower %}
+                                    {% if 'cancel' in s %}
+                                        <span class="badge bg-danger">{{ appt.status }}</span>
+                                    {% elif 'complete' in s %}
+                                        <span class="badge bg-success">{{ appt.status }}</span>
+                                    {% elif 'pending' in s %}
+                                        <span class="badge bg-warning text-dark">{{ appt.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ appt.status }}</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-end">
+                                {% with s=appt.status|lower %}
+                                    {% if not 'cancel' in s and not 'complete' in s %}
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <form method="post" action="{% url 'cancel_appointment' appt.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="/patient/appointment-history/" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                                            </form>
+                                            <a class="btn btn-outline-primary btn-sm" href="{% url 'reschedule_appointment' appt.id %}">Reschedule</a>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small">—</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4" class="text-center">No appointments found.</td></tr>
+                        <tr><td colspan="5" class="text-center">No appointments found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

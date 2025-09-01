@@ -1,0 +1,12 @@
+/* Patient Dashboard specific styles */
+body { background-color: #f8f9fa; }
+.card { border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.quick-btn { height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.section-header { background: linear-gradient(90deg, #0d6efd, #0dcaf0); color: white; }
+
+/* Header navbar mimic landing without hero bleed */
+.navbar-toggler.gray .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='gray' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+.navbar-toggler.gray { border-color: #6c757d; }
+.navbar-toggler.gray:focus { box-shadow: 0 0 0 .2rem rgba(108,117,125,.25); }

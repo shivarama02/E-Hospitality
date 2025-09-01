@@ -9,6 +9,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Page CSS -->
+  <link rel="stylesheet" href="{% static 'css/patient.css' %}?v=20250901">
   <style>
     body { background-color: #f8f9fa; }
     .card { border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
@@ -19,19 +21,34 @@
 </head>
 <body>
 
-  <!-- Header (preserves links and logout modal trigger) -->
-  <header class="bg-white shadow-sm border-bottom">
+  <!-- Header aligned with landing navbar -->
+  <header class="border-bottom bg-white shadow-sm">
     <div class="container py-3 d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center">
-					<img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 36px; width: 36px; margin-right: 10px;">
-					<h1 class="h4 text-primary fw-bold mb-0">CityCare Hospital</h1>
-				</div>
-      <nav class="d-flex align-items-center gap-2">
-        <a href="/patient/dashboard/" class="btn btn-light">Dashboard</a>
-        <a href="/patient/profile/" class="btn btn-light">Profile</a>
-        <a href="/notifications/" class="btn btn-light">Notifications</a>
-        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+        <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 36px; width: 36px; margin-right: 10px;">
+        <h1 class="h4 text-primary fw-bold mb-0">CityCare Hospital</h1>
+      </div>
+      <nav class="d-none d-md-flex gap-4">
+        <a href="/patient/dashboard/" class="text-dark text-decoration-none fw-semibold">Dashboard</a>
+        <a href="/patient/profile/" class="text-dark text-decoration-none fw-semibold">Profile</a>
+        <a href="/notifications/" class="text-dark text-decoration-none fw-semibold">Notifications</a>
+        <button class="btn btn-outline-primary px-3 py-1" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
       </nav>
+      <!-- Mobile nav toggle -->
+      <button class="navbar-toggler gray d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavMobile" aria-controls="navbarNavMobile" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+    <!-- Mobile Nav -->
+    <div class="collapse" id="navbarNavMobile">
+      <div class="container pb-3">
+        <nav class="nav flex-column gap-2">
+          <a href="/patient/dashboard/" class="nav-link text-dark">Dashboard</a>
+          <a href="/patient/profile/" class="nav-link text-dark">Profile</a>
+          <a href="/notifications/" class="nav-link text-dark">Notifications</a>
+          <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+        </nav>
+      </div>
     </div>
   </header>
 
@@ -55,7 +72,7 @@
     <div class="container">
       <div class="row g-3">
         <div class="col-6 col-md-3">
-          <a href="/patient/appointment-booking/" class="btn btn-primary w-100 quick-btn">
+          <a href="/patient/appointment-booking/" class="btn btn-outline-primary w-100 quick-btn">
             <i class="bi bi-calendar fs-3"></i>
             <span>Book Appointment</span>
           </a>
@@ -67,15 +84,15 @@
           </a>
         </div>
         <div class="col-6 col-md-3">
-          <a href="/patient/billing-payment/" class="btn btn-outline-secondary w-100 quick-btn">
-            <i class="bi bi-credit-card fs-3"></i>
-            <span>Billing</span>
-          </a>
-        </div>
-        <div class="col-6 col-md-3">
           <a href="/patient/health-education/" class="btn btn-outline-secondary w-100 quick-btn">
             <i class="bi bi-book fs-3"></i>
             <span>Health Education</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="/patient/billing-payment/" class="btn btn-outline-secondary w-100 quick-btn">
+            <i class="bi bi-credit-card fs-3"></i>
+            <span>Billing</span>
           </a>
         </div>
       </div>
@@ -95,26 +112,49 @@
               <i class="bi bi-calendar-check me-2"></i> Upcoming Appointments
             </div>
             <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
-                <div>
-                  <h6 class="mb-1">Dr. Sarah Johnson</h6>
-                  <small class="text-muted">Cardiology Consultation</small>
+              {% if upcoming %}
+                {% for appt in upcoming %}
+                <div class="p-3 bg-light rounded {% if not forloop.last %}mb-2{% endif %}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="mb-1">{{ appt.doctor.name }}</h6>
+                      {% if appt.doctor.specialization %}
+                        <small class="text-muted">{{ appt.doctor.specialization }}</small>
+                      {% endif %}
+                    </div>
+                    <div class="text-end">
+                      <strong>{{ appt.date }}</strong><br>
+                      <small class="text-muted">{{ appt.time }}</small>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div>
+                      {% with s=appt.status|lower %}
+                        {% if 'cancel' in s %}
+                          <span class="badge bg-danger">{{ appt.status }}</span>
+                        {% elif 'complete' in s %}
+                          <span class="badge bg-success">{{ appt.status }}</span>
+                        {% elif 'pending' in s %}
+                          <span class="badge bg-warning text-dark">{{ appt.status }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">{{ appt.status }}</span>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                    <div class="d-flex gap-2">
+                      <form method="post" action="{% url 'cancel_appointment' appt.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="/patient/dashboard/" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                      </form>
+                      <a class="btn btn-outline-primary btn-sm" href="{% url 'reschedule_appointment' appt.id %}">Reschedule</a>
+                    </div>
+                  </div>
                 </div>
-                <div class="text-end">
-                  <strong>Mar 15, 2024</strong><br>
-                  <small class="text-muted">2:00 PM - 2:30 PM</small>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
-                <div>
-                  <h6 class="mb-1">Dr. Michael Chen</h6>
-                  <small class="text-muted">General Checkup</small>
-                </div>
-                <div class="text-end">
-                  <strong>Mar 22, 2024</strong><br>
-                  <small class="text-muted">10:00 AM - 10:30 AM</small>
-                </div>
-              </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-center text-muted py-3">No upcoming appointments.</div>
+              {% endif %}
               <a href="/patient/appointment-history/" class="btn btn-outline-primary w-100 mt-3">View All Appointments</a>
             </div>
           </div>
@@ -125,21 +165,18 @@
               <i class="bi bi-file-earmark-text me-2"></i> Recent Medical History
             </div>
             <div class="card-body">
-              <div class="border-start border-4 border-primary ps-3 mb-3">
-                <h6>Cardiology Consultation</h6>
-                <small class="text-muted">Mar 1, 2024 - Dr. Sarah Johnson</small>
-                <p class="mb-0">ECG results normal. Blood pressure slightly elevated. Prescribed medication.</p>
-              </div>
-              <div class="border-start border-4 border-success ps-3 mb-3">
-                <h6>Blood Test Results</h6>
-                <small class="text-muted">Feb 28, 2024 - Lab Department</small>
-                <p class="mb-0">All values within normal range.</p>
-              </div>
-              <div class="border-start border-4 border-warning ps-3">
-                <h6>Annual Physical</h6>
-                <small class="text-muted">Feb 15, 2024 - Dr. Michael Chen</small>
-                <p class="mb-0">Overall health good. Recommended increase in physical activity.</p>
-              </div>
+              {% if recent_history %}
+                {% for item in recent_history %}
+                  <div class="border-start border-4 border-primary ps-3 {% if not forloop.last %}mb-3{% endif %}">
+                    <h6 class="mb-1">{{ item.diagnosis }}</h6>
+                    {% if item.notes %}<small class="text-muted d-block">{{ item.notes|truncatechars:120 }}</small>{% endif %}
+                    {% if item.treatment %}<p class="mb-0">{{ item.treatment|truncatechars:160 }}</p>{% endif %}
+                    {% if item.allergies %}<small class="text-muted">Allergies: {{ item.allergies }}</small>{% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-center text-muted py-3">No medical history yet.</div>
+              {% endif %}
               <a href="/patient/medical-history/" class="btn btn-outline-primary w-100 mt-3">View Complete Medical History</a>
             </div>
           </div>

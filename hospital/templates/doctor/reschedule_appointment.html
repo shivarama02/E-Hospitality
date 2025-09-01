@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Appointment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="card shadow-sm" style="max-width: 640px; margin: 0 auto;">
+      <div class="card-header fw-bold">Reschedule Appointment</div>
+      <div class="card-body">
+        <p class="text-muted">Patient: <strong>{{ appointment.patient.pname }}</strong></p>
+        <p class="text-muted">Current: <strong>{{ appointment.date }}</strong> at <strong>{{ appointment.time }}</strong></p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="date" class="form-label">New Date</label>
+            <input type="date" id="date" name="date" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="time" class="form-label">New Time</label>
+            <input type="time" id="time" name="time" class="form-control" required>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Confirm Reschedule</button>
+            <a href="/doctor/appointment-schedule/" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

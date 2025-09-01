@@ -127,6 +127,7 @@ def login_view(request):
 			# hospital_doctor table
 			user = Doctor.objects.filter(name__iexact=username, password=password).first()
 			if user:
+				request.session['doctor_name'] = user.name
 				return redirect('/doctor/dashboard/')
 			else:
 				messages.error(request, 'Invalid doctor credentials.')
@@ -168,7 +169,7 @@ def register_view(request):
 			if Doctor.objects.filter(name=username).exists():
 				messages.error(request, 'Doctor already exists.')
 				return render(request, 'register.html', context)
-			Doctor.objects.create(
+			doc = Doctor.objects.create(
 				name=username,
 				password=password,
 				email=email,
@@ -176,6 +177,7 @@ def register_view(request):
 				contact='',
 				department=None
 			)
+			request.session['doctor_name'] = doc.name
 			return redirect('/doctor/dashboard/')
 		elif role == 'admin':
 			if User.objects.filter(username=username, role='admin').exists():
@@ -192,7 +194,7 @@ def register_view(request):
 			if Patient.objects.filter(pname=username).exists():
 				messages.error(request, 'Patient already exists.')
 				return render(request, 'register.html', context)
-			Patient.objects.create(
+			pat = Patient.objects.create(
 				pname=username,
 				password=password,
 				email=email,
@@ -200,6 +202,7 @@ def register_view(request):
 				address='',
 				insurance_info='',
 			)
+			request.session['patient_name'] = pat.pname
 			return redirect('/patient/dashboard/')
 	return render(request, 'register.html', context)
 
@@ -208,6 +211,8 @@ def forgot_password_view(request):
 
 # Patient Module
 def patient_dashboard(request):
+	from datetime import date
+	from .models import Appointment, Patient, MedicalHistory
 	quick_links = [
 		{'name': 'Book Appointment', 'url': '/patient/appointment-booking/'},
 		{'name': 'Appointment History', 'url': '/patient/appointment-history/'},
@@ -215,7 +220,29 @@ def patient_dashboard(request):
 		{'name': 'Billing & Payment', 'url': '/patient/billing-payment/'},
 		{'name': 'Health Education', 'url': '/patient/health-education/'},
 	]
-	return render(request, 'patient/dashboard.html', {'quick_links': quick_links})
+	# Determine current patient from session (fallback to first patient if absent)
+	patient_name = request.session.get('patient_name')
+	patient = None
+	if patient_name:
+		try:
+			patient = Patient.objects.get(pname=patient_name)
+		except Patient.DoesNotExist:
+			patient = None
+	if patient is None:
+		patient = Patient.objects.first()
+
+	if patient:
+		upcoming = Appointment.objects.filter(patient=patient, date__gte=date.today()).order_by('date', 'time')[:3]
+		recent_history = MedicalHistory.objects.filter(patient=patient).order_by('-id')[:3]
+	else:
+		upcoming = []
+		recent_history = []
+
+	return render(request, 'patient/dashboard.html', {
+		'quick_links': quick_links,
+	'upcoming': upcoming,
+	'recent_history': recent_history,
+	})
 
 def appointment_booking(request):
 	from .models import Appointment, Doctor, Patient
@@ -247,10 +274,11 @@ def appointment_booking(request):
 				time=time,
 				status='Upcoming'
 			)
-			message = 'Appointment booked successfully!'
+			# Redirect to patient dashboard after successful booking
+			return redirect('/patient/dashboard/')
 		else:
 			message = 'Invalid doctor or patient.'
-		return render(request, 'patient/appointment_booking.html', {'doctors': doctors, 'message': message})
+			return render(request, 'patient/appointment_booking.html', {'doctors': doctors, 'message': message})
 	return render(request, 'patient/appointment_booking.html', {'doctors': doctors})
 
 def appointment_history(request):
@@ -263,6 +291,51 @@ def appointment_history(request):
 	except Patient.DoesNotExist:
 		appointments = []
 	return render(request, 'patient/appointment_history.html', {'appointments': appointments})
+
+from django.views.decorators.http import require_http_methods
+
+@require_http_methods(["POST"])
+def cancel_appointment(request, appointment_id):
+	from .models import Appointment, Patient
+	# Ensure the appointment belongs to the current session patient
+	patient_name = request.session.get('patient_name')
+	try:
+		patient = Patient.objects.get(pname=patient_name)
+	except Patient.DoesNotExist:
+		return redirect('appointment_history')
+	appt = get_object_or_404(Appointment, id=appointment_id, patient=patient)
+	# Set status with by who information
+	appt.status = 'Cancelled (by patient)'
+	appt.save()
+	# Redirect back to where the action came from if provided
+	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+	if next_url:
+		return redirect(next_url)
+	return redirect('appointment_history')
+
+def reschedule_appointment(request, appointment_id):
+	from .models import Appointment, Patient
+	patient_name = request.session.get('patient_name')
+	try:
+		patient = Patient.objects.get(pname=patient_name)
+	except Patient.DoesNotExist:
+		return redirect('appointment_history')
+	appt = get_object_or_404(Appointment, id=appointment_id, patient=patient)
+	if request.method == 'POST':
+		# Update date/time and reset status to Pending
+		new_date = request.POST.get('date')
+		new_time = request.POST.get('time')
+		if new_date:
+			appt.date = new_date
+		if new_time:
+			appt.time = new_time
+		# Normalize status after reschedule
+		appt.status = 'Pending'
+		appt.save()
+	# Always redirect to appointment history after reschedule
+	return redirect('appointment_history')
+	# GET: show a simple form
+	return render(request, 'patient/reschedule_appointment.html', {'appointment': appt})
 
 def medical_history(request):
 	from .models import MedicalHistory, Patient
@@ -316,12 +389,42 @@ def appointment_management(request):
 
 # Doctor Module
 def doctor_dashboard(request):
+	from datetime import date
+	from .models import Appointment, Doctor
 	links = [
 		{'name': 'Patient Records', 'url': '/doctor/patient-records/'},
 		{'name': 'Appointment Schedule', 'url': '/doctor/appointment-schedule/'},
 		{'name': 'E-Prescribing', 'url': '/doctor/e-prescribing/'},
 	]
-	return render(request, 'doctor/dashboard.html', {'links': links})
+	# Determine current doctor from session, fallback to first doctor
+	doctor_name = request.session.get('doctor_name')
+	doctor = None
+	if doctor_name:
+		try:
+			doctor = Doctor.objects.get(name=doctor_name)
+		except Doctor.DoesNotExist:
+			doctor = None
+	if doctor is None:
+		doctor = Doctor.objects.first()
+
+	if doctor:
+		schedule_today = Appointment.objects.filter(doctor=doctor, date=date.today()).select_related('patient').order_by('time')
+		today_count = schedule_today.count()
+		next_appt = schedule_today.first()
+		department_name = doctor.department.name if doctor.department else ''
+	else:
+		schedule_today = []
+		today_count = 0
+		next_appt = None
+		department_name = ''
+
+	return render(request, 'doctor/dashboard.html', {
+		'links': links,
+		'schedule_today': schedule_today,
+		'today_count': today_count,
+		'next_appt': next_appt,
+		'department_name': department_name,
+	})
 
 def patient_records(request):
 	from .models import Patient
@@ -353,11 +456,18 @@ def update_medical_history(request, patient_id):
 def appointment_schedule(request):
 	from .models import Appointment, Doctor
 	# For demo, get doctor from session or use a placeholder
-	doctor_name = request.session.get('doctor_name', 'Dr. John Doe')
-	try:
-		doctor = Doctor.objects.get(name=doctor_name)
+	doctor_name = request.session.get('doctor_name')
+	doctor = None
+	if doctor_name:
+		try:
+			doctor = Doctor.objects.get(name=doctor_name)
+		except Doctor.DoesNotExist:
+			doctor = None
+	if doctor is None:
+		doctor = Doctor.objects.first()
+	if doctor:
 		schedule = Appointment.objects.filter(doctor=doctor).order_by('-date', '-time')
-	except Doctor.DoesNotExist:
+	else:
 		schedule = []
 	return render(request, 'doctor/appointment_schedule.html', {'schedule': schedule})
 
@@ -366,6 +476,69 @@ def e_prescribing(request):
 		{'id': 1, 'name': 'Jane Doe'},
 	]
 	return render(request, 'doctor/e_prescribing.html', {'patients': patients})
+
+# Doctor actions on appointments
+from django.views.decorators.http import require_POST
+
+@require_POST
+def doctor_cancel_appointment(request, appointment_id):
+	from .models import Appointment, Doctor
+	doctor_name = request.session.get('doctor_name')
+	doctor = None
+	if doctor_name:
+		try:
+			doctor = Doctor.objects.get(name=doctor_name)
+		except Doctor.DoesNotExist:
+			doctor = None
+	if doctor is None:
+		return redirect('appointment_schedule')
+	appt = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
+	appt.status = 'Cancelled (by doctor)'
+	appt.save()
+	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+	return redirect(next_url or 'appointment_schedule')
+
+@require_POST
+def doctor_complete_appointment(request, appointment_id):
+	from .models import Appointment, Doctor
+	doctor_name = request.session.get('doctor_name')
+	doctor = None
+	if doctor_name:
+		try:
+			doctor = Doctor.objects.get(name=doctor_name)
+		except Doctor.DoesNotExist:
+			doctor = None
+	if doctor is None:
+		return redirect('appointment_schedule')
+	appt = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
+	appt.status = 'Completed'
+	appt.save()
+	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+	return redirect(next_url or 'appointment_schedule')
+
+def doctor_reschedule_appointment(request, appointment_id):
+	from .models import Appointment, Doctor
+	doctor_name = request.session.get('doctor_name')
+	doctor = None
+	if doctor_name:
+		try:
+			doctor = Doctor.objects.get(name=doctor_name)
+		except Doctor.DoesNotExist:
+			doctor = None
+	if doctor is None:
+		return redirect('appointment_schedule')
+	appt = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
+	if request.method == 'POST':
+		new_date = request.POST.get('date')
+		new_time = request.POST.get('time')
+		if new_date:
+			appt.date = new_date
+		if new_time:
+			appt.time = new_time
+		appt.status = 'Pending'
+		appt.save()
+		return redirect('appointment_schedule')
+	return render(request, 'doctor/reschedule_appointment.html', {'appointment': appt})
 
 # Common
 def notifications_view(request):
@@ -439,7 +612,8 @@ def patient_profile_settings(request):
 from django.shortcuts import redirect
 
 def logout_confirmation(request):
-    if request.method == "POST":
-        logout(request)  # logs the user out
-        return redirect('landing')  # send to landing page
-    return render(request, 'logout_confirmation.html')
+	if request.method == "POST":
+		logout(request)  # logs the user out
+		request.session.flush()
+		return redirect('landing')  # send to landing page
+	return render(request, 'logout_confirmation.html')
