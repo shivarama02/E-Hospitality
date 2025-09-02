@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      @page { size: A4; margin: 20mm; }
+      body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #111; padding-bottom: 40px; }
+      .header { text-align: center;  padding-bottom: 10px; margin-bottom: 18px; }
+      .logo { width: 60px; height: 60px; display: block; margin: 0 auto 6px auto; }
+      .brand { font-size: 20px; color: #0d6efd; font-weight: bold; }
+      .meta { margin-top: 4px; color: #555; font-size: 15px; }
+      strong { font-size: 17px;}
+      .section-title { font-size: 17px; font-weight: bold; margin: 16px 0 8px; }
+  .table-wrap { border: 1px solid #0d6efd; border-radius: 10px; padding: 0; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+      th, td { border: 1px solid #999; padding: 6px 8px; }
+      th { background: #e9f2ff; }
+      .row-alt { background: #f7fbff; }
+      .notes { padding: 8px; min-height: 60px; }
+      .footer { position: fixed; left: 20mm; right: 20mm; bottom: 12mm; border-top: 1px solid #ccc; padding-top: 6px; font-size: 10px; color: #666; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img class="logo" src="{% static 'images/logo.png' %}" />
+      <div class="brand">CityCare Hospital</div>
+      <div class="meta">Prescription {{ presc.id }} • {{ presc.visit_datetime|default:"N/A" }}</div>
+    </div>
+
+    <div>
+      <strong>Patient:</strong> {{ presc.patient.pname }}<br>
+      <strong>Doctor:</strong> {{ presc.doctor.name }}
+    </div>
+
+  <div class="section-title">Medicines</div>
+  <div class="table-wrap">
+  <table>
+      <thead>
+        <tr>
+          <th style="width:50%">Medicine</th>
+          <th style="width:25%">Dosage</th>
+          <th style="width:25%">Schedule</th>
+        </tr>
+      </thead>
+      <tbody>
+    {% for item in presc.items.all %}
+    <tr class="{% cycle '' 'row-alt' %}">
+          <td>{{ item.medicine_name }}</td>
+          <td>{{ item.dosage }}</td>
+          <td>{{ item.schedule|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">No medicines recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+  </table>
+  </div>
+
+    {% if presc.notes %}
+    <div class="section-title">Notes</div>
+    <div class="notes">{{ presc.notes }}</div>
+    {% endif %}
+
+  <div class="footer">Generated on {{ now }} • www.citycare.example</div>
+  </body>
+  
+</html>

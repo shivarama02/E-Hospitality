@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <style>
+    @page { size: A4; margin: 24pt; }
+    body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 11pt; }
+    .header { text-align:center; margin-bottom: 12pt; }
+    .logo { height:42pt; }
+    .hospital-name { font-size: 16pt; font-weight: bold; margin-top: 6pt; }
+    .subtitle { color: #555; font-size: 10pt; }
+    .card { border: 1pt solid #ccc; border-radius: 8pt; padding: 8pt; }
+    .item { border-bottom: 1pt solid #e0e0e0; padding: 6pt 0; }
+    .item:last-child { border-bottom: none; }
+    .footer { position: fixed; bottom: 12pt; left: 24pt; right: 24pt; text-align:center; color:#666; font-size:9pt; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img class="logo" src="{% static 'images/logo.png' %}" alt="logo"/>
+    <div class="hospital-name">CityCare Hospital</div>
+    <div class="subtitle">Health Education Resources</div>
+  </div>
+
+  <div class="card">
+    {% for r in resources %}
+      <div class="item">
+        <strong>{{ r.type }}:</strong> {{ r.title }}
+      </div>
+    {% empty %}
+      <div class="item">No resources available.</div>
+    {% endfor %}
+  </div>
+
+  <div class="footer">Stay informed. Stay healthy.</div>
+</body>
+</html>

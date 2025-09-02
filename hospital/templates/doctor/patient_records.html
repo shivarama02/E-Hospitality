@@ -15,6 +15,7 @@
         </style>
 </head>
 <body>
+    {% include 'components/back_bar.html' %}
 
     <!-- Header -->
     <header class="bg-white shadow-sm border-bottom">
@@ -25,7 +26,6 @@
             </div>
             <nav class="d-flex align-items-center gap-2">
                 <a href="/doctor/dashboard/" class="btn btn-light">Dashboard</a>
-                <a href="/doctor/patient-records/" class="btn btn-primary">Patient Records</a>
                 <a href="/doctor/appointment-schedule/" class="btn btn-light">Schedule</a>
                 <a href="/doctor/e-prescribing/" class="btn btn-light">E-Prescribing</a>
                 <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>

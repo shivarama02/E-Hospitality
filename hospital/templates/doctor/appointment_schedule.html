@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <!DOCTYPE html>
@@ -19,6 +20,41 @@
     </style>
 </head>
 <body>
+
+    <!-- Header aligned with landing navbar -->
+        <header class="border-bottom bg-white shadow-sm">
+                <div class="container py-3 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                                <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 36px; width: 36px; margin-right: 10px;">
+                                <h1 class="h4 text-primary fw-bold mb-0">CityCare Hospital</h1>
+                        </div>
+                        <nav class="d-none d-md-flex gap-4">
+                                <a href="/doctor/dashboard/" class="text-dark text-decoration-none fw-semibold">Dashboard</a>
+                                <a href="/doctor/profile/" class="text-dark text-decoration-none fw-semibold">Profile</a>
+                                <a href="/notifications/" class="text-dark text-decoration-none fw-semibold">Notifications</a>
+                                <button class="btn btn-outline-primary px-3 py-1" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+                        </nav>
+                        <!-- Mobile nav toggle -->
+                        <button class="navbar-toggler gray d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavMobile" aria-controls="navbarNavMobile" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                        </button>
+                </div>
+                <!-- Mobile Nav -->
+                <div class="collapse" id="navbarNavMobile">
+                        <div class="container pb-3">
+                                <nav class="nav flex-column gap-2">
+                                        <a href="/doctor/dashboard/" class="nav-link text-dark">Dashboard</a>
+                                        <a href="/doctor/profile/" class="nav-link text-dark">Profile</a>
+                                        <a href="/notifications/" class="nav-link text-dark">Notifications</a>
+                                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+                                </nav>
+                        </div>
+                </div>
+        </header>
+
+
+{% include 'components/back_bar.html' %}
+{% include 'components/alerts.html' %}
 <div class="container">
     <div class="schedule-card card mt-5">
         <div class="card-body">

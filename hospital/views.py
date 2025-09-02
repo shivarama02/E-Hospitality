@@ -293,6 +293,7 @@ def appointment_history(request):
 	return render(request, 'patient/appointment_history.html', {'appointments': appointments})
 
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_POST
 
 @require_http_methods(["POST"])
 def cancel_appointment(request, appointment_id):
@@ -307,6 +308,8 @@ def cancel_appointment(request, appointment_id):
 	# Set status with by who information
 	appt.status = 'Cancelled (by patient)'
 	appt.save()
+	from django.contrib import messages
+	messages.success(request, 'Appointment cancelled.')
 	# Redirect back to where the action came from if provided
 	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
 	if next_url:
@@ -330,8 +333,10 @@ def reschedule_appointment(request, appointment_id):
 		if new_time:
 			appt.time = new_time
 		# Normalize status after reschedule
-		appt.status = 'Pending'
-		appt.save()
+	appt.status = 'Pending'
+	appt.save()
+	from django.contrib import messages
+	messages.success(request, 'Appointment rescheduled.')
 	# Always redirect to appointment history after reschedule
 	return redirect('appointment_history')
 	# GET: show a simple form
@@ -349,10 +354,130 @@ def medical_history(request):
 	return render(request, 'patient/medical_history.html', {'history': history})
 
 def billing_payment(request):
-	bills = [
-		{'invoice': 'INV-001', 'amount': 100.00, 'status': 'Unpaid', 'payment_date': '-', 'pay_url': '#'},
-	]
-	return render(request, 'patient/billing_payment.html', {'bills': bills})
+	from .models import Prescription, Billing, Patient
+	from datetime import date
+	# Resolve current patient
+	patient_name = request.session.get('patient_name')
+	patient = Patient.objects.filter(pname=patient_name).first() if patient_name else Patient.objects.first()
+	prescription = None
+	items = []
+	billing = None
+	if patient:
+		prescription = Prescription.objects.filter(patient=patient).order_by('-created_at', '-id').first()
+		if prescription:
+			items = list(prescription.items.all())
+			billing = Billing.objects.filter(patient=patient, prescription=prescription).first()
+			if not billing:
+				# Create a new invoice for this prescription
+				def make_invoice_no():
+					base = date.today().strftime('INV-%Y%m%d')
+					count = Billing.objects.filter(invoice_number__startswith=base).count() + 1
+					return f"{base}-{count:03d}"
+				# Use the amount suggested on the prescription, fallback to 500.00
+				presc_amount = prescription.amount if getattr(prescription, 'amount', None) not in (None, '') else None
+				billing = Billing.objects.create(
+					patient=patient,
+					prescription=prescription,
+					invoice_number=make_invoice_no(),
+					amount=presc_amount if presc_amount is not None else 500.00,
+					payment_status='Unpaid',
+				)
+	return render(request, 'patient/billing_payment.html', {
+		'prescription': prescription,
+		'items': items,
+		'billing': billing,
+	})
+
+@require_POST
+def pay_invoice(request, billing_id):
+	from .models import Billing
+	from datetime import date
+	billing = get_object_or_404(Billing, id=billing_id)
+	# Ensure the invoice belongs to session patient
+	patient_name = request.session.get('patient_name')
+	if not billing.patient or billing.patient.pname != patient_name:
+		messages.error(request, 'Unauthorized payment attempt.')
+		return redirect('billing_payment')
+	billing.payment_status = 'Paid'
+	billing.payment_date = date.today()
+	billing.save()
+	messages.success(request, 'Payment successful.')
+	return redirect('billing_payment')
+
+def download_prescription(request, prescription_id):
+	from .models import Prescription, Billing
+	from django.template.loader import render_to_string
+	from django.http import HttpResponse
+	from xhtml2pdf import pisa
+	from django.conf import settings
+	import os
+	from django.contrib.staticfiles import finders
+
+	presc = get_object_or_404(Prescription, id=prescription_id)
+	# Ensure patient matches session
+	patient_name = request.session.get('patient_name')
+	if not presc.patient or presc.patient.pname != patient_name:
+		messages.error(request, 'Unauthorized download attempt.')
+		return redirect('billing_payment')
+	# Require paid invoice first
+	billing = Billing.objects.filter(prescription=presc, patient=presc.patient).first()
+	if billing and billing.payment_status.lower() != 'paid':
+		messages.error(request, 'Please complete payment to download your prescription.')
+		return redirect('billing_payment')
+
+	# Build absolute logo path for PDF
+	logo_path = os.path.join(settings.BASE_DIR, 'hospital', 'static', 'images', 'logo.png')
+	logo_url = f'file:///{logo_path}'.replace('\\', '/')
+
+	html = render_to_string('patient/prescription_pdf.html', {
+		'presc': presc,
+		'logo_url': logo_url,
+		'now': presc.created_at or '',
+	})
+	response = HttpResponse(content_type='application/pdf')
+	response['Content-Disposition'] = f'attachment; filename="prescription_{presc.id}.pdf"'
+	# Resolve static/media URIs for xhtml2pdf
+	def link_callback(uri, rel):
+		# Resolve STATIC/MEDIA and app-level static paths for xhtml2pdf
+		s_url = (settings.STATIC_URL or '/static/').rstrip('/') + '/'
+		m_url = (settings.MEDIA_URL or '/media/').rstrip('/') + '/'
+
+		# If the URI starts with STATIC_URL, try finders with the relative part
+		if uri.startswith(s_url):
+			relpath = uri[len(s_url):]
+			result = finders.find(relpath)
+			if result:
+				if isinstance(result, (list, tuple)):
+					return result[0]
+				return result
+			# Fallback to STATIC_ROOT
+			static_root = getattr(settings, 'STATIC_ROOT', '')
+			if static_root:
+				candidate = os.path.join(static_root, relpath)
+				if os.path.exists(candidate):
+					return candidate
+			# Last resort: app static under BASE_DIR
+			candidate = os.path.join(settings.BASE_DIR, 'hospital', 'static', relpath)
+			if os.path.exists(candidate):
+				return candidate
+			return uri
+
+		if uri.startswith(m_url):
+			relpath = uri[len(m_url):]
+			media_root = getattr(settings, 'MEDIA_ROOT', '')
+			candidate = os.path.join(media_root, relpath)
+			if os.path.exists(candidate):
+				return candidate
+			return uri
+
+		# Already an absolute file path or other scheme
+		return uri
+
+	pisa_status = pisa.CreatePDF(src=html, dest=response, link_callback=link_callback)
+	if pisa_status.err:
+		messages.error(request, 'Failed to generate PDF. Please try again.')
+		return redirect('billing_payment')
+	return response
 
 def health_education(request):
 	resources = [
@@ -360,6 +485,59 @@ def health_education(request):
 		{'type': 'Video', 'title': 'Exercise Tips', 'url': '#'},
 	]
 	return render(request, 'patient/health_education.html', {'resources': resources})
+
+def download_health_education(request):
+	# Generate a PDF of health education resources
+	resources = [
+		{'type': 'Article', 'title': 'Healthy Eating', 'url': '#'},
+		{'type': 'Video', 'title': 'Exercise Tips', 'url': '#'},
+	]
+	from django.template.loader import render_to_string
+	from django.http import HttpResponse
+	from xhtml2pdf import pisa
+	from django.conf import settings
+	import os
+	from django.contrib.staticfiles import finders
+
+	def link_callback(uri, rel):
+		s_url = (settings.STATIC_URL or '/static/').rstrip('/') + '/'
+		m_url = (settings.MEDIA_URL or '/media/').rstrip('/') + '/'
+		if uri.startswith(s_url):
+			relpath = uri[len(s_url):]
+			result = finders.find(relpath)
+			if result:
+				if isinstance(result, (list, tuple)):
+					return result[0]
+				return result
+			static_root = getattr(settings, 'STATIC_ROOT', '')
+			if static_root:
+				candidate = os.path.join(static_root, relpath)
+				if os.path.exists(candidate):
+					return candidate
+			candidate = os.path.join(settings.BASE_DIR, 'hospital', 'static', relpath)
+			if os.path.exists(candidate):
+				return candidate
+			return uri
+		if uri.startswith(m_url):
+			relpath = uri[len(m_url):]
+			media_root = getattr(settings, 'MEDIA_ROOT', '')
+			candidate = os.path.join(media_root, relpath)
+			if os.path.exists(candidate):
+				return candidate
+			return uri
+		return uri
+
+	html = render_to_string('patient/health_education_pdf.html', {
+		'resources': resources,
+	})
+	response = HttpResponse(content_type='application/pdf')
+	response['Content-Disposition'] = 'attachment; filename="health_education.pdf"'
+	pisa_status = pisa.CreatePDF(src=html, dest=response, link_callback=link_callback)
+	if pisa_status.err:
+		from django.contrib import messages
+		messages.error(request, 'Failed to generate PDF. Please try again.')
+		return redirect('health_education')
+	return response
 
 # Admin Module
 def admin_dashboard(request):
@@ -390,7 +568,7 @@ def appointment_management(request):
 # Doctor Module
 def doctor_dashboard(request):
 	from datetime import date
-	from .models import Appointment, Doctor
+	from .models import Appointment, Doctor, Prescription
 	links = [
 		{'name': 'Patient Records', 'url': '/doctor/patient-records/'},
 		{'name': 'Appointment Schedule', 'url': '/doctor/appointment-schedule/'},
@@ -412,11 +590,14 @@ def doctor_dashboard(request):
 		today_count = schedule_today.count()
 		next_appt = schedule_today.first()
 		department_name = doctor.department.name if doctor.department else ''
+		# Latest prescriptions authored by this doctor
+		recent_prescriptions = Prescription.objects.filter(doctor=doctor).select_related('patient').order_by('-created_at', '-id')[:5]
 	else:
 		schedule_today = []
 		today_count = 0
 		next_appt = None
 		department_name = ''
+		recent_prescriptions = []
 
 	return render(request, 'doctor/dashboard.html', {
 		'links': links,
@@ -424,6 +605,7 @@ def doctor_dashboard(request):
 		'today_count': today_count,
 		'next_appt': next_appt,
 		'department_name': department_name,
+	'recent_prescriptions': recent_prescriptions,
 	})
 
 def patient_records(request):
@@ -472,10 +654,62 @@ def appointment_schedule(request):
 	return render(request, 'doctor/appointment_schedule.html', {'schedule': schedule})
 
 def e_prescribing(request):
-	patients = [
-		{'id': 1, 'name': 'Jane Doe'},
-	]
-	return render(request, 'doctor/e_prescribing.html', {'patients': patients})
+	# Persist prescription with items
+	if request.method == 'POST':
+		from django.contrib import messages
+		from .models import Prescription, PrescriptionItem, Patient, Doctor
+		from decimal import Decimal, InvalidOperation
+		# Get doctor from session
+		doctor = None
+		doc_name = request.session.get('doctor_name')
+		if doc_name:
+			doctor = Doctor.objects.filter(name=doc_name).first()
+		else:
+			doctor = Doctor.objects.first()
+
+		# Try to resolve patient by exact name, fallback to first
+		patient_name = request.POST.get('patient_name', '').strip()
+		patient = Patient.objects.filter(pname__iexact=patient_name).first() if patient_name else None
+		if not patient:
+			patient = Patient.objects.first()
+
+		age = request.POST.get('age') or None
+		amount_raw = request.POST.get('amount')
+		visit_dt = request.POST.get('visit_datetime') or None
+		notes = request.POST.get('notes', '')
+		try:
+			amount_val = None
+			if amount_raw not in (None, ''):
+				try:
+					amount_val = Decimal(amount_raw)
+				except InvalidOperation:
+					amount_val = None
+			presc = Prescription.objects.create(
+				patient=patient,
+				doctor=doctor,
+				patient_age=int(age) if age else None,
+				visit_datetime=visit_dt or None,
+				notes=notes,
+				amount=amount_val,
+			)
+			names = request.POST.getlist('medicine_name[]')
+			dosages = request.POST.getlist('dosage[]')
+			schedules = request.POST.getlist('schedule[]')
+			for i in range(len(names)):
+				name = (names[i] or '').strip()
+				if not name:
+					continue
+				PrescriptionItem.objects.create(
+					prescription=presc,
+					medicine_name=name,
+					dosage=(dosages[i] if i < len(dosages) else '').strip(),
+					schedule=(schedules[i] if i < len(schedules) else '').strip(),
+				)
+			messages.success(request, 'Prescription saved successfully.')
+		except Exception as e:
+			messages.error(request, f'Failed to save prescription: {e}')
+		return redirect('/doctor/e-prescribing/')
+	return render(request, 'doctor/e_prescribing.html')
 
 # Doctor actions on appointments
 from django.views.decorators.http import require_POST
@@ -495,6 +729,8 @@ def doctor_cancel_appointment(request, appointment_id):
 	appt = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
 	appt.status = 'Cancelled (by doctor)'
 	appt.save()
+	from django.contrib import messages
+	messages.success(request, 'Appointment cancelled.')
 	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
 	return redirect(next_url or 'appointment_schedule')
 
@@ -513,6 +749,8 @@ def doctor_complete_appointment(request, appointment_id):
 	appt = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
 	appt.status = 'Completed'
 	appt.save()
+	from django.contrib import messages
+	messages.success(request, 'Appointment marked as completed.')
 	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
 	return redirect(next_url or 'appointment_schedule')
 

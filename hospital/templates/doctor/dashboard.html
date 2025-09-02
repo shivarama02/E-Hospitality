@@ -170,8 +170,8 @@
                                                 <div class="row g-3">
                                                         <div class="col-md-6"><a class="btn btn-medical w-100 h-100" href="/doctor/patient-records/"><i class="bi bi-file-earmark-text me-2"></i>Patient Records</a></div>
                                                         <div class="col-md-6"><a class="btn btn-outline-primary w-100 h-100" href="/doctor/appointment-schedule/"><i class="bi bi-calendar3 me-2"></i>Appointment History</a></div>
-                                                        <div class="col-md-6"><button class="btn btn-outline-primary w-100 h-100" type="button"><i class="bi bi-heart-pulse me-2"></i>Treatment Plans</button></div>
-                                                        <div class="col-md-6"><button class="btn btn-outline-primary w-100 h-100" type="button"><i class="bi bi-plus-lg me-2"></i>Add New Patient</button></div>
+                                                        <!-- <div class="col-md-6"><button class="btn btn-outline-primary w-100 h-100" type="button"><i class="bi bi-heart-pulse me-2"></i>Treatment Plans</button></div>
+                                                        <div class="col-md-6"><button class="btn btn-outline-primary w-100 h-100" type="button"><i class="bi bi-plus-lg me-2"></i>Add New Patient</button></div> -->
                                                 </div>
                                         </div>
                                 </div>
@@ -185,24 +185,31 @@
                                         <div class="card-body">
                                                 <div class="row g-3 mb-4">
                                                         <div class="col-md-4"><a class="btn btn-medical w-100 h-100" href="/doctor/e-prescribing/"><i class="bi bi-plus-lg me-2"></i>New Prescription</a></div>
-                                                        <div class="col-md-4"><a class="btn btn-outline-primary w-100 h-100" href="/doctor/e-prescribing/"><i class="bi bi-clock me-2"></i>Pending Reviews</a></div>
-                                                        <div class="col-md-4"><a class="btn btn-outline-primary w-100 h-100" href="/doctor/e-prescribing/"><i class="bi bi-search me-2"></i>Drug Database</a></div>
+                                                        <!-- <div class="col-md-4"><a class="btn btn-outline-primary w-100 h-100" href="/doctor/e-prescribing/"><i class="bi bi-clock me-2"></i>Pending Reviews</a></div>
+                                                        <div class="col-md-4"><a class="btn btn-outline-primary w-100 h-100" href="/doctor/e-prescribing/"><i class="bi bi-search me-2"></i>Drug Database</a></div> -->
                                                 </div>
+                                                                                        
                                                 <div class="p-3 bg-light border rounded">
                                                         <h6 class="text-primary mb-2">Recent Prescriptions</h6>
-                                                        <div class="d-flex justify-content-between small">
-                                                                <span>John Doe - Lisinopril 10mg</span>
-                                                                <span class="badge bg-light text-dark">Sent</span>
-                                                        </div>
-                                                        <div class="d-flex justify-content-between small">
-                                                                <span>Maria Rodriguez - Metformin 500mg</span>
-                                                                <span class="badge bg-light text-dark">Pending</span>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                </div>
-
-                        </div>
+        {% if recent_prescriptions %}
+         {% for p in recent_prescriptions %}
+        <div class="d-flex justify-content-between small py-1">
+                <span>
+                        {{ p.patient.pname }}
+                        {% if p.patient_age %}<span class="text-muted">• Age {{ p.patient_age }}</span>{% endif %}
+                        {% if p.visit_datetime %}<span class="text-muted">• {{ p.visit_datetime }}</span>{% endif %}
+                </span>
+                <span class="badge bg-light text-dark">
+                        ₹{% if p.amount %}{{ p.amount }}{% else %}—{% endif %}
+                </span>
+                                                                                                        </div>
+                                                                                                        {% endfor %}
+                                                                                                        {% else %}
+                                                                                                        <div class="text-muted">No recent prescriptions.</div>
+                                                                                                        {% endif %}
+                                                                                                </div>                                                                                                </div>
+        </div>
+</div>
 
                         <!-- Sidebar -->
                         <div class="col-lg-4">

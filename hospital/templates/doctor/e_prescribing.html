@@ -1,37 +1,265 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Prescribing</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>E-Prescribing</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+        <style>
+            body { background: #f6f8fb; }
+            .card-rounded { border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+            .step-indicator .step { width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; }
+            .step-active { background: #0d6efd; color: #fff; }
+            .step-inactive { background: #e9ecef; color: #6c757d; }
+            .divider { height: 2px; background: #e9ecef; }
+            .table thead th { background: #e9f2ff; }
+            .remove-row { color: #dc3545; }
+        </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h2>E-Prescribing</h2>
-    <form>
-        <div class="mb-3">
-            <label for="patient" class="form-label">Patient</label>
-            <input type="text" class="form-control" id="patient" name="patient">
+
+    <!-- Header aligned with landing navbar -->
+        <header class="border-bottom bg-white shadow-sm">
+                <div class="container py-3 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                                <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 36px; width: 36px; margin-right: 10px;">
+                                <h1 class="h4 text-primary fw-bold mb-0">CityCare Hospital</h1>
+                        </div>
+                        <nav class="d-none d-md-flex gap-4">
+                                <a href="/doctor/dashboard/" class="text-dark text-decoration-none fw-semibold">Dashboard</a>
+                                <a href="/doctor/profile/" class="text-dark text-decoration-none fw-semibold">Profile</a>
+                                <a href="/notifications/" class="text-dark text-decoration-none fw-semibold">Notifications</a>
+                                <button class="btn btn-outline-primary px-3 py-1" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+                        </nav>
+                        <!-- Mobile nav toggle -->
+                        <button class="navbar-toggler gray d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavMobile" aria-controls="navbarNavMobile" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                        </button>
+                </div>
+                <!-- Mobile Nav -->
+                <div class="collapse" id="navbarNavMobile">
+                        <div class="container pb-3">
+                                <nav class="nav flex-column gap-2">
+                                        <a href="/doctor/dashboard/" class="nav-link text-dark">Dashboard</a>
+                                        <a href="/doctor/profile/" class="nav-link text-dark">Profile</a>
+                                        <a href="/notifications/" class="nav-link text-dark">Notifications</a>
+                                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#logoutModal">Logout</button>
+                                </nav>
+                        </div>
+                </div>
+        </header>
+
+
+{% include 'components/back_bar.html' %}
+{% include 'components/alerts.html' %}
+
+<div class="container py-4">
+    <div class="card card-rounded">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-3 mb-4 step-indicator">
+                <div id="stepDot1" class="step step-active">1</div>
+                <div class="flex-grow-1 divider"></div>
+                <div id="stepDot2" class="step step-inactive">2</div>
+                <div class="flex-grow-1 divider"></div>
+                <div id="stepDot3" class="step step-inactive">3</div>
+            </div>
+
+            <h3 class="fw-bold mb-3">E‑Prescribing</h3>
+            <p class="text-muted mb-4">Create and send a prescription in three quick steps.</p>
+
+            <form id="prescriptionForm" method="post">
+                {% csrf_token %}
+                <!-- Step 1: Patient Info -->
+                <div id="step1">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Patient Name</label>
+                            <input required type="text" name="patient_name" class="form-control" placeholder="Enter patient full name">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Age</label>
+                            <input required type="number" name="age" min="0" class="form-control" placeholder="e.g. 42">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date & Time</label>
+                            <input required type="datetime-local" name="visit_datetime" id="visitDatetime" class="form-control">
+                        </div>
+                        
+                    </div>
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-primary" id="toStep2">Next <i class="bi bi-arrow-right ms-1"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Medicines -->
+                <div id="step2" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">Medicines</h5>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="addRow">
+                            <i class="bi bi-plus-lg"></i> Add Medicine
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle" id="medsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40%">Medicine Name</th>
+                                    <th style="width:25%">Dosage</th>
+                                    <th style="width:30%">Schedule</th>
+                                    <th style="width:5%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="medicine_name[]" class="form-control" placeholder="e.g. Amoxicillin" required>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="dosage[]" class="form-control" placeholder="e.g. 500 mg" required>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-3 flex-wrap">
+                                            <div class="form-check">
+                                                <input class="form-check-input sched-m" type="checkbox">
+                                                <label class="form-check-label">Morning</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input sched-a" type="checkbox">
+                                                <label class="form-check-label">Afternoon</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input sched-e" type="checkbox">
+                                                <label class="form-check-label">Evening</label>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="schedule[]" value="">
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-link remove-row p-0" title="Remove">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3">
+                        <button type="button" class="btn btn-light" id="backTo1"><i class="bi bi-arrow-left me-1"></i> Back</button>
+                        <button type="button" class="btn btn-primary" id="toStep3">Next <i class="bi bi-arrow-right ms-1"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Notes & Submit -->
+                <div id="step3" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label">Extra Notes</label>
+                        <textarea name="notes" rows="4" class="form-control" placeholder="Any instructions or notes for the patient..."></textarea>
+                    </div>
+                    <div class="col-md-3">
+                            <label class="form-label">Amount (₹)</label>
+                            <input type="number" name="amount" step="0.01" min="0" class="form-control" placeholder="e.g. 500">
+                    </div>
+                    <div class="d-flex justify-content-between mt-3"></div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-light" id="backTo2"><i class="bi bi-arrow-left me-1"></i> Back</button>
+                        <button type="submit" class="btn btn-success">Send Prescription</button>
+                    </div>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            <label for="medication" class="form-label">Medication Name</label>
-            <input type="text" class="form-control" id="medication" name="medication">
-        </div>
-        <div class="mb-3">
-            <label for="dosage" class="form-label">Dosage</label>
-            <input type="text" class="form-control" id="dosage" name="dosage">
-        </div>
-        <div class="mb-3">
-            <label for="duration" class="form-label">Duration</label>
-            <input type="text" class="form-control" id="duration" name="duration">
-        </div>
-        <div class="mb-3">
-            <label for="notes" class="form-label">Notes</label>
-            <textarea class="form-control" id="notes" name="notes"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Send Prescription</button>
-    </form>
+    </div>
 </div>
+
+<template id="rowTemplate">
+    <tr>
+        <td>
+            <input type="text" name="medicine_name[]" class="form-control" placeholder="e.g. Amoxicillin" required>
+        </td>
+        <td>
+            <input type="text" name="dosage[]" class="form-control" placeholder="e.g. 500 mg" required>
+        </td>
+        <td>
+            <div class="d-flex gap-3 flex-wrap">
+                <div class="form-check">
+                    <input class="form-check-input sched-m" type="checkbox">
+                    <label class="form-check-label">Morning</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input sched-a" type="checkbox">
+                    <label class="form-check-label">Afternoon</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input sched-e" type="checkbox">
+                    <label class="form-check-label">Evening</label>
+                </div>
+            </div>
+            <input type="hidden" name="schedule[]" value="">
+        </td>
+        <td class="text-end">
+            <button type="button" class="btn btn-link remove-row p-0" title="Remove">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </td>
+    </tr>
+  
+</template>
+
+<script>
+    // Step management
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const dot1 = document.getElementById('stepDot1');
+    const dot2 = document.getElementById('stepDot2');
+    const dot3 = document.getElementById('stepDot3');
+    function setStep(n){
+        [step1, step2, step3].forEach((el,i)=> el.classList.toggle('d-none', i !== (n-1)));
+        [dot1,dot2,dot3].forEach((d,i)=>{
+            d.classList.toggle('step-active', i === (n-1));
+            d.classList.toggle('step-inactive', i !== (n-1));
+        });
+    }
+    document.getElementById('toStep2').addEventListener('click', ()=> setStep(2));
+    document.getElementById('toStep3').addEventListener('click', ()=> setStep(3));
+    document.getElementById('backTo1').addEventListener('click', ()=> setStep(1));
+    document.getElementById('backTo2').addEventListener('click', ()=> setStep(2));
+
+    // Auto-set current datetime
+    const dt = new Date();
+    const pad = (n)=> String(n).padStart(2,'0');
+    const localISO = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    document.getElementById('visitDatetime').value = localISO;
+
+    // Medicines dynamic rows
+    const medsTable = document.getElementById('medsTable').querySelector('tbody');
+    const rowTpl = document.getElementById('rowTemplate');
+    document.getElementById('addRow').addEventListener('click', ()=>{
+        medsTable.appendChild(rowTpl.content.cloneNode(true));
+    });
+    // Delegate remove row
+    medsTable.addEventListener('click', (e)=>{
+        if(e.target.closest('.remove-row')){
+            const tr = e.target.closest('tr');
+            if(medsTable.children.length > 1){
+                tr.remove();
+            }
+        }
+    });
+
+    // Before submit, map schedule checkboxes to hidden schedule[] value per row
+    document.getElementById('prescriptionForm').addEventListener('submit', (e)=>{
+        [...medsTable.querySelectorAll('tr')].forEach(tr=>{
+            const s = [];
+            if(tr.querySelector('.sched-m')?.checked) s.push('M');
+            if(tr.querySelector('.sched-a')?.checked) s.push('A');
+            if(tr.querySelector('.sched-e')?.checked) s.push('E');
+            tr.querySelector('input[type="hidden"][name="schedule[]"]').value = s.join(',');
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

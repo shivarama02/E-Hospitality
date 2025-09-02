@@ -37,6 +37,7 @@ class MedicalHistory(models.Model):
 
 class Billing(models.Model):
 	patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
+	prescription = models.ForeignKey('Prescription', on_delete=models.SET_NULL, null=True, blank=True)
 	invoice_number = models.CharField(max_length=50, unique=True)
 	amount = models.DecimalField(max_digits=10, decimal_places=2)
 	payment_status = models.CharField(max_length=20)
@@ -102,13 +103,25 @@ class Doctor(models.Model):
 class Prescription(models.Model):
 	patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
 	doctor = models.ForeignKey('Doctor', on_delete=models.CASCADE)
-	medication_name = models.CharField(max_length=255)
-	dosage = models.CharField(max_length=100)
-	duration = models.CharField(max_length=100)
+	visit_datetime = models.DateTimeField(null=True, blank=True)
+	patient_age = models.IntegerField(null=True, blank=True)
 	notes = models.TextField(blank=True, null=True)
+	created_at = models.DateTimeField(auto_now_add=True, null=True)
+	# Optional amount suggested by the doctor for this prescription; used to seed Billing.amount
+	amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 	def __str__(self):
-		return f"{self.medication_name} for {self.patient.pname}"
+		return f"Prescription for {self.patient.pname} by {self.doctor.name}"
+
+class PrescriptionItem(models.Model):
+	prescription = models.ForeignKey('Prescription', on_delete=models.CASCADE, related_name='items')
+	medicine_name = models.CharField(max_length=255)
+	dosage = models.CharField(max_length=100)
+	# Schedule string like "M,A,E" for Morning, Afternoon, Evening
+	schedule = models.CharField(max_length=20, blank=True)
+
+	def __str__(self):
+		return f"{self.medicine_name} ({self.dosage})"
 
 class DrugInteraction(models.Model):
 	drug1 = models.CharField(max_length=100)

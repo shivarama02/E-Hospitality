@@ -37,7 +37,10 @@ urlpatterns = [
     path('patient/appointments/<int:appointment_id>/reschedule/', views.reschedule_appointment, name='reschedule_appointment'),
     path('patient/medical-history/', views.medical_history, name='medical_history'),
     path('patient/billing-payment/', views.billing_payment, name='billing_payment'),
+    path('patient/pay-invoice/<int:billing_id>/', views.pay_invoice, name='pay_invoice'),
+    path('patient/prescription/<int:prescription_id>/download/', views.download_prescription, name='download_prescription'),
     path('patient/health-education/', views.health_education, name='health_education'),
+    path('patient/health-education/download/', views.download_health_education, name='download_health_education'),
         path('patient/profile/', views.patient_profile, name='patient_profile'),
         path('patient/profile-settings/', views.patient_profile_settings, name='patient_profile_settings'),
 
